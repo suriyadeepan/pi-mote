@@ -1,0 +1,5 @@
+1. organize README.md
+2. seperated Source zserver.c into modules
+3. create documentation : docs/ directory
+4. create seperate documents for seperate sections
+5. add reference research papers to ref/ directory
