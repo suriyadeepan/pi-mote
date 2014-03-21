@@ -1,3 +1,15 @@
+/*
+ *   Author : Suriyadeepan R
+ *   TAGS:
+ *   PWM based motor control,
+ *   Multithreading,
+ *   Socket Communication,
+ *   Multiple Client socket Handling,
+ *
+ *
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -19,43 +31,60 @@
 #define AVG_SPEED 0
 #define KONSTANT 1.35
 
-#define MOT1 7 // LEFT TURN (ie) RIGHT MOTOR
+// Motor Pins
+#define MOT1 7 
 #define PIN1 0
-#define MOT2 3 // RIGHT TURN (ie) LEFT MOTOR
+#define MOT2 3
 #define PIN2 2
 
 // deviation
+//  probably useless now
 int devi = 30;
 
+// Info on nodes
 int node_id = 4;
+// Destination node coordinates
 int des_x = -1;
 int des_y = -1;
-
+// Src Node coordinates
 int src_x = -1;
 int src_y = -1;
 
+// String obtained serially 
+//  from TelosB
 char serialDat[7];
 
+// AVG speed for each motor
 int avg_speed1 = 40;
 int avg_speed2 = 40;
 
+// delAngle => difference in angle => ( cAngle - gAngle )
+//  deviation from ideal
 int delAngle=0;
 
+// PWM generation threads
 pthread_t pwm1;
 pthread_t pwm2;
 
-
+// PWM for Motor 1
 void *pwmGen1(){
 
+				// send pulses continuously to motor
         while(1)
             softPwmWrite(MOT1,avg_speed1);
 
+				// exit thread
         pthread_exit(NULL);
 }
 
+// PWM for Motor 2
 void *pwmGen2(){
 
+				// send pulses continuously to motor
         while(1){
+						// a value of '2' is added to prevent the bot to 
+						//  be one one sided
+						//   need a better generic way to solve this 
             softPwmWrite(MOT2,avg_speed2+2);
         }
 
@@ -63,13 +92,16 @@ void *pwmGen2(){
 }
 
 
-// global vars
+// global vars for socket communication
     int sockfd, newsockfd,newsockfd1, portno, clilen,clilen1;
-    char buffer[20],buffer1[20];
-//    char gBuff[15];
     struct sockaddr_in serv_addr, cli_addr,cli_addr1;
+ 
+// buffers for storing data from socket
+    char buffer[20],buffer1[20];
+
     int  n;
 
+		// Ideal angle and current angle
     int gAngle = -1;
     int cAngle = 290;
 
@@ -154,6 +186,8 @@ void getNewSocket(){
 
          
 // the communication thread
+//  continue to obtain angle from socket
+//   (ie) from compass
 void *continueComm(){
 
 while(1){
@@ -166,6 +200,7 @@ while(1){
         exit(1);
     }
 
+	// convert to int
 	gAngle = atoi(buffer);
 
         if(abs(gAngle - cAngle) < abs(360 + gAngle - cAngle) )
@@ -179,7 +214,9 @@ while(1){
         
       //  if(node_id != -1)
        //         printf("Node : %d ; Dest : (%d,%d)\n",node_id,des_x,des_y);
+			 //
 
+				// Based on difference in angle adjust the speed of motors
         if( delAngle > 0 && abs(delAngle) > 5 ) 
         {
                 avg_speed1 = KONSTANT*delAngle;
@@ -202,6 +239,9 @@ while(1){
 
         else
         {
+								// if src location = destionation location
+								//  we have reached the dest.
+								//   stop movin
                 if( src_x == des_x && src_y == des_y ){
                         avg_speed1=0;
                         avg_speed2=0;
@@ -214,6 +254,7 @@ while(1){
         }
    
 }
+	// exit thread
    pthread_exit(NULL); 
 
 }// end of communication thread...
@@ -225,6 +266,7 @@ while(1){
 
 */
 
+// completely stop the motors
 void stop_it(int delay_step){
 
 digitalWrite (7, 0) ;       // Off
@@ -242,8 +284,9 @@ digitalWrite (2, 0) ;       // Off
 }
 
 
+// Initilialize PWM
+//  start the pwm generation threads
 void initPwm(){
-
 
         softPwmCreate(MOT1,0,95);
         softPwmCreate(MOT2,0,95);
@@ -255,6 +298,8 @@ void initPwm(){
 }
 
 
+// read from serial port
+//  (ie) from telosB
 void* readSerial ()
 {
   int fd ;
@@ -313,12 +358,14 @@ void* readSerial ()
 
 }
 
+// MAIN
 int main( int argc, char *argv[] )
 {
         // initialize WiringPi
         if (wiringPiSetup () == -1)
                 return 1 ;
- 
+
+			  // GPIO pin setup	
         pinMode(PIN1,OUTPUT);
         pinMode(PIN2,OUTPUT);
         pinMode(MOT1,OUTPUT);
@@ -339,22 +386,30 @@ int main( int argc, char *argv[] )
 
     printf("\nComm Initialized!\n");
 
+		// initiate compass
     initCompass();
     printf("\nCompass Initialized!\n");
 
+		// continue communication
     pthread_t continueComm00;
     pthread_create(&continueComm00, NULL, continueComm, NULL);
 
     printf("\nContinueComm thread started!\n");
 
+		// initialize PWM
     initPwm();
     printf("pwm initialized!");
 
+		// initialize serial comm
     pthread_t serialComm;
     pthread_create(&serialComm, NULL, readSerial, NULL);
 
 
 
+		// based on the data obtained from telosB - src and dest
+		//  set the direction of the bot 
+		//   Code section below is a bit inefficient and complicated
+		//    FIX : need to be simplified
    while(1){
        
         int i;
@@ -433,10 +488,11 @@ int main( int argc, char *argv[] )
    
    }
 
+	 // kill all threads
     pthread_exit(NULL);
 
-        return 0;
+    return 0;
 
 
 
-}
+}// END OF MAIN
