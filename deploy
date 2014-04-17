@@ -1,1 +1,42 @@
-scp -r /home/r2d2v2/workspace/pi-mote/zserver.c /home/r2d2v2/workspace/pi-mote/attach_compass.py pi@192.168.1.$1:/home/pi/pi-mote/
+#!/bin/bash
+
+if [ $# -eq 2 ]
+then
+
+	opt1=$1
+	opt2=$2
+
+	if [ $opt1 -eq 1 ]
+	then
+		
+		if [ ${#opt2} -lt 4 ] 
+		then
+			scp -r /home/r2d2v2/workspace/pi-mote/zserver.c /home/r2d2v2/workspace/pi-mote/attach_compass.py pi@192.168.1.$opt2:/home/pi/pi-mote/
+
+		else
+			scp -r /home/r2d2v2/workspace/pi-mote/zserver.c /home/r2d2v2/workspace/pi-mote/attach_compass.py pi@$opt2:/home/pi/pi-mote/
+		fi
+	
+	elif [ $opt1 -eq 0 ]
+	then
+
+		if [ ${#opt2} -lt 4 ]
+		then
+			scp -r /home/r2d2v2/workspace/pi-mote pi@192.168.1.$opt2:/home/pi/
+
+		else
+			scp -r /home/r2d2v2/workspace/pi-mote pi@$opt2:/home/pi/
+
+		fi
+
+	else
+	echo Usage : ./deploy option ip
+
+	fi
+
+
+else
+	echo Usage : ./deploy option ip
+fi
+
+
