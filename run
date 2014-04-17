@@ -1,0 +1,2 @@
+gcc -lwiringPi -lpthread -lm zserver.c -o zserver
+sudo ./zserver 

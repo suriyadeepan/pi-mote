@@ -6,8 +6,6 @@
  *   Socket Communication,
  *   Multiple Client socket Handling,
  *
- *
- *
  */
 
 #include <stdio.h>
@@ -29,7 +27,7 @@
 
 #define DELAY_TIME 300
 #define AVG_SPEED 0
-#define KONSTANT 1.35
+#define KONSTANT 0.8
 
 // Motor Pins
 #define MOT1 7 
@@ -39,24 +37,24 @@
 
 // deviation
 //  probably useless now
-int devi = 30;
+int devi = 0;
 
 // Info on nodes
 int node_id = 4;
 // Destination node coordinates
-int des_x = -1;
-int des_y = -1;
+int des_x = 1;
+int des_y = 1;
 // Src Node coordinates
-int src_x = -1;
-int src_y = -1;
+int src_x = 2;
+int src_y = 2;
 
 // String obtained serially 
 //  from TelosB
 char serialDat[7];
 
 // AVG speed for each motor
-int avg_speed1 = 40;
-int avg_speed2 = 40;
+int avg_speed1 = 30;
+int avg_speed2 = 30;
 
 // delAngle => difference in angle => ( cAngle - gAngle )
 //  deviation from ideal
@@ -70,8 +68,10 @@ pthread_t pwm2;
 void *pwmGen1(){
 
 				// send pulses continuously to motor
-        while(1)
+        while(1){
             softPwmWrite(MOT1,avg_speed1);
+						//softPwmWrite(MOT1,80);
+				}
 
 				// exit thread
         pthread_exit(NULL);
@@ -85,7 +85,8 @@ void *pwmGen2(){
 						// a value of '2' is added to prevent the bot to 
 						//  be one one sided
 						//   need a better generic way to solve this 
-            softPwmWrite(MOT2,avg_speed2+2);
+            softPwmWrite(MOT2,avg_speed2);
+						//softPwmWrite(MOT2,80);
         }
 
         pthread_exit(NULL);
@@ -123,7 +124,6 @@ void initCompass(){
         exit(1);
     }
 
-    printf("\nNewsockfd : %d",newsockfd);
        
 }
 
@@ -203,6 +203,9 @@ while(1){
 	// convert to int
 	gAngle = atoi(buffer);
 
+	// print direction from compass
+	//printf("%d\n",gAngle);
+
         if(abs(gAngle - cAngle) < abs(360 + gAngle - cAngle) )
                 delAngle = gAngle - cAngle;
 
@@ -210,16 +213,17 @@ while(1){
                 delAngle = (360 + gAngle - cAngle);
 
         
-//        printf("%d\n",delAngle);
+        printf("%d %d %d\n",delAngle,avg_speed1,avg_speed2);
         
       //  if(node_id != -1)
        //         printf("Node : %d ; Dest : (%d,%d)\n",node_id,des_x,des_y);
 			 //
 
+				
 				// Based on difference in angle adjust the speed of motors
-        if( delAngle > 0 && abs(delAngle) > 5 ) 
+        if( delAngle < 0 && abs(delAngle) > 5 ) 
         {
-                avg_speed1 = KONSTANT*delAngle;
+                avg_speed1 = KONSTANT * abs(delAngle);
                 avg_speed2 = 0;
 
                 if(avg_speed1 < 25)
@@ -227,7 +231,7 @@ while(1){
 
         }
 
-        else if( delAngle < 0 && abs(delAngle) > 5 ) 
+        else if( delAngle > 0 && abs(delAngle) > 5 ) 
         {
                 avg_speed2 = KONSTANT * abs(delAngle);
                 avg_speed1 = 0;
@@ -248,8 +252,8 @@ while(1){
                 }
 
                 else{
-                        avg_speed1=35;
-                        avg_speed2=35;
+                        avg_speed1=60;
+                        avg_speed2=60;
                 }
         }
    
@@ -375,7 +379,7 @@ int main( int argc, char *argv[] )
         digitalWrite(PIN2,0);
 
 
-        printf("\nGPIO Initialized!\n");
+        printf("\n>> GPIO Initialized!\n");
        
 
 
@@ -384,25 +388,27 @@ int main( int argc, char *argv[] )
     // initiate communication
     initComm();
 
-    printf("\nComm Initialized!\n");
+    printf("\n>> Comm Initialized!\n");
 
 		// initiate compass
     initCompass();
-    printf("\nCompass Initialized!\n");
+    printf("\n>> Compass Initialized!\n");
 
 		// continue communication
     pthread_t continueComm00;
     pthread_create(&continueComm00, NULL, continueComm, NULL);
 
-    printf("\nContinueComm thread started!\n");
+    printf("\n>> ContinueComm thread started!\n");
 
 		// initialize PWM
     initPwm();
-    printf("pwm initialized!");
+    printf("\n>> PWM initialized!");
 
 		// initialize serial comm
     pthread_t serialComm;
     pthread_create(&serialComm, NULL, readSerial, NULL);
+
+		printf("\n>> Serial Comm thread started\n");
 
 
 
@@ -418,7 +424,7 @@ int main( int argc, char *argv[] )
                 src_x = serialDat[2] - '0';
                 src_y = serialDat[4] - '0';
 
-                devi = 18;
+//                devi = 18;
 
         }
 
@@ -465,8 +471,8 @@ int main( int argc, char *argv[] )
         }
  
         //printf("node : %c x : %c y : %c",serialDat[0],serialDat[2],serialDat[4]);
-        printf("Current Loc : (%d,%d) ; Destination : (%d,%d) ; Angle : %d\n",src_x,src_y,des_x,des_y,cAngle);
-        printf("\n");
+        //printf("Current Loc : (%d,%d) ; Destination : (%d,%d) ; Angle : %d\n",src_x,src_y,des_x,des_y,cAngle);
+        //printf("\n");
 
 //        printf("Angle : %d; delAngle : %d\n",cAngle,delAngle);
 
