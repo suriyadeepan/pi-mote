@@ -1,0 +1,43 @@
+
+echo
+echo * Installing i2c-tools
+sudo apt-get install i2c-tools
+
+echo
+echo * Editing /etc/modprobe.d/raspi-blacklist.conf
+sudo echo "blacklist spi-bcm2708" > /etc/modprobe.d/raspi-blacklist.conf
+sudo echo "#blacklist i2c-bcm2708" >> /etc/modprobe.d/raspi-blacklist.conf
+
+echo
+echo * Editing /etc/modules
+sudo echo "i2c-bcm2708" >> /etc/modules
+sudo echo "i2c-dev" >> /etc/modules
+
+echo
+echo * Editing /etc/udev/rules.d/99-i2c.rules
+sudo echo "SUBSYSTEM==\"i2c-dev\", MODE=\"0666\"" >> /etc/udev/rules.d/99-i2c.rules
+
+echo
+echo * Installing python3
+sudo apt-get install python3
+
+echo
+echo * Installing python-smbus
+sudo apt-get install python-smbus
+
+echo 
+echo * Copying I2c Python libs
+scp -r r2d2v2@$1:~/workspace/pi-mote/i2clibraries ~/pi-mote/
+scp -r r2d2v2@$1:~/workspace/pi-mote/quick2wire-python-api ~/pi-mote/
+
+echo "export QUICK2WIRE_API_HOME=~/pi-mote/quick2wire-python-api" >> ~/.bashrc
+echo "export PYTHONPATH=$PYTHONPATH:$QUICK2WIRE_API_HOME" >> ~/.bashrc
+source ~/.bashrc
+
+echo
+echo * Checking for i2c devices"
+i2cdetect -y 1
+
+echo
+echo * Running sample code
+
