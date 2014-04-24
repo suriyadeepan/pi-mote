@@ -27,13 +27,13 @@
 
 #define DELAY_TIME 300
 #define AVG_SPEED 0
-#define KONSTANT 0.8
+#define KONSTANT 0.9
 
 // Motor Pins
 #define MOT1 7 
 #define PIN1 0
-#define MOT2 3
-#define PIN2 2
+#define MOT2 13
+#define PIN2 12
 
 // deviation
 //  probably useless now
@@ -206,14 +206,14 @@ while(1){
 	// print direction from compass
 	//printf("%d\n",gAngle);
 
-        if(abs(gAngle - cAngle) < abs(360 + gAngle - cAngle) )
-                delAngle = gAngle - cAngle;
+      if(abs(gAngle - cAngle) < abs(360 + gAngle - cAngle) )
+      	delAngle = gAngle - cAngle;
 
         else 
-                delAngle = (360 + gAngle - cAngle);
+         delAngle = (360 + gAngle - cAngle);
 
         
-        printf("%d %d %d\n",delAngle,avg_speed1,avg_speed2);
+        //printf("%d %d %d\n",delAngle,avg_speed1,avg_speed2);
         
       //  if(node_id != -1)
        //         printf("Node : %d ; Dest : (%d,%d)\n",node_id,des_x,des_y);
@@ -379,7 +379,7 @@ int main( int argc, char *argv[] )
         digitalWrite(PIN2,0);
 
 
-        printf("\n>> GPIO Initialized!\n");
+        printf("\nzserver:~ info: GPIO Initialized!\n");
        
 
 
@@ -388,27 +388,27 @@ int main( int argc, char *argv[] )
     // initiate communication
     initComm();
 
-    printf("\n>> Comm Initialized!\n");
+    printf("\nzserver:~ info: Comm Initialized!\n");
 
 		// initiate compass
     initCompass();
-    printf("\n>> Compass Initialized!\n");
+    printf("\nzserver:~ info: Compass Initialized!\n");
 
 		// continue communication
     pthread_t continueComm00;
     pthread_create(&continueComm00, NULL, continueComm, NULL);
 
-    printf("\n>> ContinueComm thread started!\n");
+    printf("\nzserver:~ info: ContinueComm thread started!\n");
 
 		// initialize PWM
     initPwm();
-    printf("\n>> PWM initialized!");
+    printf("\nzserver:~ info: PWM initialized!");
 
 		// initialize serial comm
     pthread_t serialComm;
     pthread_create(&serialComm, NULL, readSerial, NULL);
 
-		printf("\n>> Serial Comm thread started\n");
+		printf("\nzserver:~ info: Serial Comm thread started\n");
 
 
 
@@ -470,6 +470,7 @@ int main( int argc, char *argv[] )
                         cAngle = 180 + devi;
         }
  
+				printf("\nzserver:~ data: %d* ----> %d, %d:%d",gAngle,cAngle,avg_speed1,avg_speed2);
         //printf("node : %c x : %c y : %c",serialDat[0],serialDat[2],serialDat[4]);
         //printf("Current Loc : (%d,%d) ; Destination : (%d,%d) ; Angle : %d\n",src_x,src_y,des_x,des_y,cAngle);
         //printf("\n");
